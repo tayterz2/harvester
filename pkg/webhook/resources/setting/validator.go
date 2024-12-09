@@ -54,6 +54,7 @@ import (
 	vmUtil "github.com/harvester/harvester/pkg/util/virtualmachine"
 	werror "github.com/harvester/harvester/pkg/webhook/error"
 	"github.com/harvester/harvester/pkg/webhook/types"
+	webhookutil "github.com/harvester/harvester/pkg/webhook/util"
 )
 
 const (
@@ -136,6 +137,7 @@ func NewValidator(
 	cnCache ctlnetworkv1.ClusterNetworkCache,
 	vcCache ctlnetworkv1.VlanConfigCache,
 	vsCache ctlnetworkv1.VlanStatusCache,
+	lhNodeCache ctllhv1b2.NodeCache,
 ) types.Validator {
 	validator := &settingValidator{
 		settingCache:       settingCache,
@@ -151,6 +153,7 @@ func NewValidator(
 		cnCache:            cnCache,
 		vcCache:            vcCache,
 		vsCache:            vsCache,
+		lhNodeCache:        lhNodeCache,
 	}
 
 	validateSettingFuncs[settings.BackupTargetSettingName] = validator.validateBackupTarget
@@ -187,6 +190,7 @@ type settingValidator struct {
 	cnCache            ctlnetworkv1.ClusterNetworkCache
 	vcCache            ctlnetworkv1.VlanConfigCache
 	vsCache            ctlnetworkv1.VlanStatusCache
+	lhNodeCache        ctllhv1b2.NodeCache
 }
 
 func (v *settingValidator) Resource() types.Resource {
@@ -1304,8 +1308,31 @@ func (v *settingValidator) checkStorageNetworkRangeValid(config *storagenetworkc
 		return err
 	}
 	if !network.IP.Equal(ip) {
-		return fmt.Errorf("Range should be subnet CIDR %v", network)
+		return fmt.Errorf("range should be subnet CIDR %v", network)
 	}
+
+	lhnodes, err := v.lhNodeCache.List(metav1.NamespaceAll, labels.Everything())
+	if err != nil {
+		return werror.NewInternalError(err.Error())
+	}
+
+	MinAllocatableIPAddrs := 0
+
+	// Formula - https://docs.harvesterhci.io/v1.4/advanced/storagenetwork/
+	//Number of Images to download/upload is dynamic, so skipped in the formula calculated.
+	for _, lhNode := range lhnodes {
+		MinAllocatableIPAddrs = MinAllocatableIPAddrs + 2 + (len(lhNode.Spec.Disks) * 2)
+	}
+
+	count, err := webhookutil.GetUsableIPAddressesCount(config.Range, config.Exclude)
+	if err != nil {
+		return err
+	}
+
+	if count < MinAllocatableIPAddrs {
+		return fmt.Errorf("allocatable IP address range is < %d,allocate sufficient range", MinAllocatableIPAddrs)
+	}
+
 	return nil
 }
 

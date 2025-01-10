@@ -241,6 +241,7 @@ func (h *Handler) processAddonUpgrades(a *harvesterv1.Addon) (*harvesterv1.Addon
 		}
 		hc.Spec.Chart = aObj.Spec.Chart
 		hc.Spec.Repo = aObj.Spec.Repo
+		hc.Spec.RepoCA = aObj.Spec.RepoCA
 		hc.Spec.Version = aObj.Spec.Version
 		hc.Spec.ValuesContent = vals
 		_, err = h.helm.Update(hc)

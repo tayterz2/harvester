@@ -18,6 +18,9 @@ spec:
     - jsonPath: .spec.repo
       name: HelmRepo
       type: string
+    - jsonPath: .spec.repoca
+      name: HelmRepoCA
+      type: string
     - jsonPath: .spec.chart
       name: ChartName
       type: string
@@ -52,6 +55,8 @@ spec:
               enabled:
                 type: boolean
               repo:
+                type: string
+              repoca:
                 type: string
               valuesContent:
                 type: string

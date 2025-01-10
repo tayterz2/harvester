@@ -44,6 +44,7 @@ type Addon struct {
 
 type AddonSpec struct {
 	Repo          string `json:"repo"`
+	RepoCA        string `json:"repoca"`
 	Chart         string `json:"chart"`
 	Version       string `json:"version"`
 	Enabled       bool   `json:"enabled"`

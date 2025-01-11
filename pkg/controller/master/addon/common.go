@@ -76,6 +76,7 @@ func (h *Handler) deployHelmChart(aObj *harvesterv1.Addon) error {
 		Spec: helmv1.HelmChartSpec{
 			Chart:         aObj.Spec.Chart,
 			Repo:          aObj.Spec.Repo,
+			RepoCA:        aObj.Spec.RepoCA,
 			ValuesContent: vals,
 			Version:       aObj.Spec.Version,
 			BackOffLimit:  &harvesterv1.DefaultJobBackOffLimit,
